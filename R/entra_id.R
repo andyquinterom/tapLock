@@ -42,7 +42,7 @@ new_entra_id_config <- function(tenant_id, client_id, client_secret, app_url) {
       token_url = token_url,
       jwks_url = jwks_url,
       login_url = login_url,
-      jwks = fetch_jwks(jwks_url)
+      jwks = JwksManager$new(jwks_url)
     ),
     class = c("entra_id_config", "openid_config")
   )
@@ -107,24 +107,7 @@ request_token_refresh.entra_id_config <- function(config, refresh_token) {
 
 #' @keywords internal
 decode_token.entra_id_config <- function(config, token) {
-  decoded <- config$jwks |>
-    purrr::map(function(jwk) {
-      tryCatch(
-        jose::jwt_decode_sig(token, jwk),
-        error = function(e) {
-          NULL
-        },
-        warning = function(w) {
-          NULL
-        }
-      )
-    }) |>
-    purrr::discard(is.null) |>
-    purrr::pluck(1, .default = NULL)
-  if (is.null(decoded)) {
-    stop("Unable to decode token")
-  }
-  return(decoded)
+  config$jwks$decode_token(token)$print()
 }
 
 #' @keywords internal
